@@ -1,2 +1,4 @@
 /disk.img
 /mnt/
+*.o
+*.elf
