@@ -7,7 +7,6 @@
 #include <Protocol/DiskIo2.h>
 #include <Protocol/BlockIo.h>
 
-// #@@range_begin(struct_memory_map)
 struct MemoryMap
 {
     UINTN buffer_size;
@@ -17,9 +16,7 @@ struct MemoryMap
     UINTN descriptor_size;
     UINT32 descriptor_version;
 };
-// #@@range_end(struct_memory_map)
 
-// #@@range_begin(get_memory_map)
 EFI_STATUS GetMemoryMap(struct MemoryMap *map)
 {
     if (map->buffer == NULL)
@@ -35,9 +32,7 @@ EFI_STATUS GetMemoryMap(struct MemoryMap *map)
         &map->descriptor_size,
         &map->descriptor_version);
 }
-// #@@range_end(get_memory_map)
 
-// #@@range_begin(get_memory_type)
 const CHAR16 *GetMemoryTypeUnicode(EFI_MEMORY_TYPE type)
 {
     switch (type)
@@ -78,9 +73,7 @@ const CHAR16 *GetMemoryTypeUnicode(EFI_MEMORY_TYPE type)
         return L"InvalidMemoryType";
     }
 }
-// #@@range_end(get_memory_type)
 
-// #@@range_begin(save_memory_map)
 EFI_STATUS SaveMemoryMap(struct MemoryMap *map, EFI_FILE_PROTOCOL *file)
 {
     CHAR8 buf[256];
@@ -112,7 +105,6 @@ EFI_STATUS SaveMemoryMap(struct MemoryMap *map, EFI_FILE_PROTOCOL *file)
 
     return EFI_SUCCESS;
 }
-// #@@range_end(save_memory_map)
 
 EFI_STATUS OpenRootDir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root)
 {
@@ -146,7 +138,6 @@ EFI_STATUS EFIAPI UefiMain(
 {
     Print(L"Hello, Mikan World!\n");
 
-    // #@@range_begin(main)
     CHAR8 memmap_buf[4096 * 4];
     struct MemoryMap memmap = {sizeof(memmap_buf), memmap_buf, 0, 0, 0, 0};
     GetMemoryMap(&memmap);
@@ -161,7 +152,6 @@ EFI_STATUS EFIAPI UefiMain(
 
     SaveMemoryMap(&memmap, memmap_file);
     memmap_file->Close(memmap_file);
-    // #@@range_end(main)
 
     Print(L"All done\n");
 
