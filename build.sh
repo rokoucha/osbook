@@ -7,6 +7,7 @@ set +u
 # shellcheck disable=SC1091
 source edksetup.sh
 set -u
+ln -sf ../kernel ./
 build
 cp Build/MikanLoaderX64/DEBUG_CLANGPDB/X64/Loader.efi MikanLoaderPkg
 cd ..
