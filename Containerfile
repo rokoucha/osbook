@@ -1,6 +1,6 @@
 FROM docker.io/library/debian:bookworm
 
-RUN apt update && apt install -y \
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y \
     build-essential \
     ca-certificates \
     clang \
@@ -10,6 +10,7 @@ RUN apt update && apt install -y \
     lld \
     llvm-dev \
     nasm \
+    python3 \
     qemu-utils \
     sudo \
     unzip \
