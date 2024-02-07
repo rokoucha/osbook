@@ -1,5 +1,5 @@
+*.d
 *.efi
-*.EFI
 *.elf
 *.o
 /disk.img
