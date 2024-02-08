@@ -11,6 +11,7 @@ const uint8_t *GetFont(char c)
     {
         return nullptr;
     }
+
     return &_binary_hankaku_bin_start + index;
 }
 
@@ -21,6 +22,7 @@ void WriteAscii(PixelWriter &writer, int x, int y, char c, const PixelColor &col
     {
         return;
     }
+
     for (int dy = 0; dy < 16; dy++)
     {
         for (int dx = 0; dx < 8; dx++)

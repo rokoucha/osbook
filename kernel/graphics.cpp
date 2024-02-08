@@ -16,8 +16,7 @@ void BGRResv8BitPerColorPixelWriter::Write(int x, int y, const PixelColor &c)
     p[2] = c.r;
 }
 
-void DrawRectangle(PixelWriter &writer, const Vector2D<int> &pos,
-                   const Vector2D<int> &size, const PixelColor &c)
+void DrawRectangle(PixelWriter &writer, const Vector2D<int> &pos, const Vector2D<int> &size, const PixelColor &c)
 {
     for (int dx = 0; dx < size.x; dx++)
     {
@@ -31,8 +30,7 @@ void DrawRectangle(PixelWriter &writer, const Vector2D<int> &pos,
     }
 }
 
-void FillRectangle(PixelWriter &writer, const Vector2D<int> &pos,
-                   const Vector2D<int> &size, const PixelColor &c)
+void FillRectangle(PixelWriter &writer, const Vector2D<int> &pos, const Vector2D<int> &size, const PixelColor &c)
 {
     for (int dy = 0; dy < size.y; dy++)
     {
