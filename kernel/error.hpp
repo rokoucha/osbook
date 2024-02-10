@@ -28,6 +28,7 @@ public:
         kInvalidPhase,
         kUnknownXHCISpeedID,
         kNoWaiter,
+        kNoPCIMSI,
         kLasstOfCode,
     };
 
@@ -57,6 +58,7 @@ private:
         "kInvalidPhase",
         "kUnknownXHCISpeedID",
         "kNoWriter",
+        "kNoPCIMSI",
     };
     static_assert(Error::Code::kLasstOfCode == code_names_.size());
 
