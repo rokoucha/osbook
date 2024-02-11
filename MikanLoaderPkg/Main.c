@@ -10,17 +10,8 @@
 #include <Protocol/BlockIo.h>
 #include <Guid/FileInfo.h>
 #include "frame_buffer_config.hpp"
+#include "memory_map.hpp"
 #include "elf.hpp"
-
-struct MemoryMap
-{
-    UINTN buffer_size;
-    VOID *buffer;
-    UINTN map_size;
-    UINTN map_key;
-    UINTN descriptor_size;
-    UINT32 descriptor_version;
-};
 
 EFI_STATUS GetMemoryMap(struct MemoryMap *map)
 {
@@ -153,8 +144,7 @@ EFI_STATUS OpenRootDir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL **root)
     return fs->OpenVolume(fs, root);
 }
 
-EFI_STATUS OpenGOP(EFI_HANDLE image_handle,
-                   EFI_GRAPHICS_OUTPUT_PROTOCOL **gop)
+EFI_STATUS OpenGOP(EFI_HANDLE image_handle, EFI_GRAPHICS_OUTPUT_PROTOCOL **gop)
 {
     EFI_STATUS status;
     UINTN num_gop_handles = 0;
@@ -243,9 +233,7 @@ void CopyLoadSegments(Elf64_Ehdr *ehdr)
     }
 }
 
-EFI_STATUS EFIAPI UefiMain(
-    EFI_HANDLE image_handle,
-    EFI_SYSTEM_TABLE *system_table)
+EFI_STATUS EFIAPI UefiMain(EFI_HANDLE image_handle, EFI_SYSTEM_TABLE *system_table)
 {
     EFI_STATUS status;
 
@@ -269,9 +257,7 @@ EFI_STATUS EFIAPI UefiMain(
     }
 
     EFI_FILE_PROTOCOL *memmap_file;
-    status = root_dir->Open(
-        root_dir, &memmap_file, L"\\memmap",
-        EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+    status = root_dir->Open(root_dir, &memmap_file, L"\\memmap", EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
     if (EFI_ERROR(status))
     {
         Print(L"failed to open file '\\memmap': %r\n", status);
@@ -320,9 +306,7 @@ EFI_STATUS EFIAPI UefiMain(
     }
 
     EFI_FILE_PROTOCOL *kernel_file;
-    status = root_dir->Open(
-        root_dir, &kernel_file, L"\\kernel.elf",
-        EFI_FILE_MODE_READ, 0);
+    status = root_dir->Open(root_dir, &kernel_file, L"\\kernel.elf", EFI_FILE_MODE_READ, 0);
     if (EFI_ERROR(status))
     {
         Print(L"failed to open file '\\kernel.elf': %r\n", status);
@@ -331,9 +315,7 @@ EFI_STATUS EFIAPI UefiMain(
 
     UINTN file_info_size = sizeof(EFI_FILE_INFO) + sizeof(CHAR16) * 12;
     UINT8 file_info_buffer[file_info_size];
-    status = kernel_file->GetInfo(
-        kernel_file, &gEfiFileInfoGuid,
-        &file_info_size, file_info_buffer);
+    status = kernel_file->GetInfo(kernel_file, &gEfiFileInfoGuid, &file_info_size, file_info_buffer);
     if (EFI_ERROR(status))
     {
         Print(L"failed to get file information: %r\n", status);
@@ -362,8 +344,7 @@ EFI_STATUS EFIAPI UefiMain(
     CalcLoadAddressRange(kernel_ehdr, &kernel_first_addr, &kernel_last_addr);
 
     UINTN num_pages = (kernel_last_addr - kernel_first_addr + 0xfff) / 0x1000;
-    status = gBS->AllocatePages(AllocateAddress, EfiLoaderData,
-                                num_pages, &kernel_first_addr);
+    status = gBS->AllocatePages(AllocateAddress, EfiLoaderData, num_pages, &kernel_first_addr);
     if (EFI_ERROR(status))
     {
         Print(L"failed to allocate pages: %r\n", status);
@@ -418,9 +399,9 @@ EFI_STATUS EFIAPI UefiMain(
         Halt();
     }
 
-    typedef void __attribute__((sysv_abi)) EntryPointType(const struct FrameBufferConfig *);
+    typedef void __attribute__((sysv_abi)) EntryPointType(const struct FrameBufferConfig *, const struct MemoryMap *);
     EntryPointType *entry_point = (EntryPointType *)entry_addr;
-    entry_point(&config);
+    entry_point(&config, &memmap);
 
     Print(L"All done\n");
 
