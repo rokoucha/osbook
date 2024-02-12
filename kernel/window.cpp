@@ -76,3 +76,8 @@ int Window::Height() const
 {
     return height_;
 }
+
+void Window::Move(Vector2D<int> dest_pos, const Rectangle<int> &src)
+{
+    shadow_buffer_.Move(dest_pos, src);
+}

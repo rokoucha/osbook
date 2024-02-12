@@ -16,12 +16,11 @@ private:
 
 public:
     Error Initialize(const FrameBufferConfig &config);
-    Error Copy(Vector2D<int> pos, const FrameBuffer &src);
+    Error Copy(Vector2D<int> dest_pos, const FrameBuffer &src);
+    void Move(Vector2D<int> dest_pos, const Rectangle<int> &src);
 
     FrameBufferWriter &Writer()
     {
         return *writer_;
     }
 };
-
-int BitsPerPixel(PixelFormat format);

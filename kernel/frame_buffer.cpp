@@ -2,12 +2,45 @@
 
 #include <string.h>
 
+namespace
+{
+    int BytesPerPixel(PixelFormat format)
+    {
+        switch (format)
+        {
+        case kPixelRGBResv8BitPerColor:
+            return 4;
+
+        case kPixelBGRResv8BitPerColor:
+            return 4;
+
+        default:
+            return -1;
+        }
+    }
+
+    uint8_t *FrameAddressAt(Vector2D<int> pos, const FrameBufferConfig &config)
+    {
+        return config.frame_buffer + BytesPerPixel(config.pixel_format) * (config.pixels_per_scan_line * pos.y * pos.y);
+    }
+
+    int BytesPerScanLine(const FrameBufferConfig &config)
+    {
+        return BytesPerPixel(config.pixel_format) * config.pixels_per_scan_line;
+    }
+
+    Vector2D<int> FrameBufferSize(const FrameBufferConfig &config)
+    {
+        return {static_cast<int>(config.horizontal_resolution), static_cast<int>(config.vertical_resolution)};
+    }
+}
+
 Error FrameBuffer::Initialize(const FrameBufferConfig &config)
 {
     config_ = config;
 
-    const auto bits_per_pixel = BitsPerPixel(config_.pixel_format);
-    if (bits_per_pixel <= 0)
+    const auto bytes_per_pixel = BytesPerPixel(config_.pixel_format);
+    if (bytes_per_pixel <= 0)
     {
         return MAKE_ERROR(Error::kUnknownPixelFormat);
     }
@@ -18,7 +51,7 @@ Error FrameBuffer::Initialize(const FrameBufferConfig &config)
     }
     else
     {
-        buffer_.resize(((bits_per_pixel + 7) / 8) * config_.horizontal_resolution * config_.vertical_resolution);
+        buffer_.resize(bytes_per_pixel * config_.horizontal_resolution * config_.vertical_resolution);
         config_.frame_buffer = buffer_.data();
         config_.pixels_per_scan_line = config.horizontal_resolution;
     }
@@ -40,56 +73,66 @@ Error FrameBuffer::Initialize(const FrameBufferConfig &config)
     return MAKE_ERROR(Error::kSuccess);
 }
 
-Error FrameBuffer::Copy(Vector2D<int> pos, const FrameBuffer &src)
+Error FrameBuffer::Copy(Vector2D<int> dest_pos, const FrameBuffer &src)
 {
     if (config_.pixel_format != src.config_.pixel_format)
     {
         return MAKE_ERROR(Error::kUnknownPixelFormat);
     }
 
-    const auto bits_per_pixel = BitsPerPixel(config_.pixel_format);
-    if (bits_per_pixel <= 0)
+    const auto bytes_per_pixel = BytesPerPixel(config_.pixel_format);
+    if (bytes_per_pixel <= 0)
     {
         return MAKE_ERROR(Error::kUnknownPixelFormat);
     }
 
-    const auto dest_width = config_.horizontal_resolution;
-    const auto dest_height = config_.vertical_resolution;
-    const auto src_width = src.config_.horizontal_resolution;
-    const auto src_height = src.config_.vertical_resolution;
+    const auto dest_size = FrameBufferSize(config_);
+    const auto src_size = FrameBufferSize(src.config_);
 
-    const int copy_start_dest_x = std::max(pos.x, 0);
-    const int copy_start_dest_y = std::max(pos.y, 0);
-    const int copy_end_dest_x = std::min(pos.x + src_width, dest_width);
-    const int copy_end_dest_y = std::min(pos.y + src_height, dest_height);
+    const Vector2D<int> dest_start = ElementMax(dest_pos, {0, 0});
+    const Vector2D<int> dest_end = ElementMin(dest_pos + src_size, dest_size);
 
-    const auto bytes_per_pixel = (bits_per_pixel + 7) / 8;
-    const auto bytes_per_copy_line = bytes_per_pixel * (copy_end_dest_x - copy_start_dest_x);
+    uint8_t *dest_buf = FrameAddressAt(dest_start, config_);
+    const uint8_t *src_buf = FrameAddressAt({0, 0}, src.config_);
 
-    uint8_t *dest_buf = config_.frame_buffer + bytes_per_pixel * (config_.pixels_per_scan_line * copy_start_dest_y + copy_start_dest_x);
-    const uint8_t *src_buf = src.config_.frame_buffer;
-
-    for (int dy = 0; dy < copy_end_dest_y - copy_start_dest_y; dy++)
+    for (int y = dest_start.y; y < dest_end.y; y++)
     {
-        memcpy(dest_buf, src_buf, bytes_per_copy_line);
-        dest_buf += bytes_per_pixel * config_.pixels_per_scan_line;
-        src_buf += bytes_per_pixel * src.config_.pixels_per_scan_line;
+        memcpy(dest_buf, src_buf, bytes_per_pixel * (dest_end.x - dest_start.x));
+        dest_buf += BytesPerScanLine(config_);
+        src_buf += BytesPerScanLine(src.config_);
     }
 
     return MAKE_ERROR(Error::kSuccess);
 }
 
-int BitsPerPixel(PixelFormat format)
+void FrameBuffer::Move(Vector2D<int> dest_pos, const Rectangle<int> &src)
 {
-    switch (format)
+    const auto bytes_per_pixel = BytesPerPixel(config_.pixel_format);
+    const auto bytes_per_scan_line = BytesPerScanLine(config_);
+
+    // move up
+    if (dest_pos.y < src.pos.y)
     {
-    case kPixelRGBResv8BitPerColor:
-        return 32;
+        uint8_t *dest_buf = FrameAddressAt(dest_pos, config_);
+        const uint8_t *src_buf = FrameAddressAt(src.pos, config_);
+        for (int y = 0; y < src.size.y; y++)
+        {
+            memcpy(dest_buf, src_buf, bytes_per_pixel * src.size.x);
+            dest_buf += bytes_per_scan_line;
+            src_buf += bytes_per_scan_line;
+        }
+    }
 
-    case kPixelBGRResv8BitPerColor:
-        return 32;
-
-    default:
-        return -1;
+    // move down
+    else
+    {
+        uint8_t *dest_buf = FrameAddressAt(dest_pos + Vector2D<int>{0, src.size.y - 1}, config_);
+        const uint8_t *src_buf = FrameAddressAt(src.pos + Vector2D<int>{0, src.size.y - 1}, config_);
+        for (int y = 0; y < src.size.y; y++)
+        {
+            memcpy(dest_buf, src_buf, bytes_per_pixel * src.size.x);
+            dest_buf += bytes_per_scan_line;
+            src_buf += bytes_per_scan_line;
+        }
     }
 }

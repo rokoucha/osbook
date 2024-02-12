@@ -55,4 +55,6 @@ public:
 
     int Width() const;
     int Height() const;
+
+    void Move(Vector2D<int> dest_pos, const Rectangle<int> &src);
 };
