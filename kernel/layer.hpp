@@ -51,6 +51,7 @@ public:
 
     void UpDown(unsigned int id, int new_height);
     void Hide(unsigned int id);
+    Layer *FindLayerByPosition(Vector2D<int> position, unsigned int exclude_id) const;
 };
 
 extern LayerManager *layer_manager;
