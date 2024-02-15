@@ -27,7 +27,6 @@
 #include "memory_manager.hpp"
 #include "window.hpp"
 #include "layer.hpp"
-#include "timer.hpp"
 
 char pixel_writer_buf[sizeof(RGBResv8BitPerColorPixelWriter)];
 PixelWriter *pixel_writer;
@@ -45,12 +44,6 @@ int printk(const char *format, ...)
     result = vsprintf(s, format, ap);
     va_end(ap);
 
-    StartLAPICTimer();
-    console->PutString(s);
-    auto elapsed = LAPICTimerElapsed();
-    StopLAPICTimer();
-
-    sprintf(s, "[%9d]", elapsed);
     console->PutString(s);
 
     return result;
@@ -60,15 +53,17 @@ char memory_manager_buf[sizeof(BitmapMemoryManager)];
 BitmapMemoryManager *memory_manager;
 
 unsigned int mouse_layer_id;
+Vector2D<int> screen_size;
+Vector2D<int> mouse_position;
 
 void MouseObserver(int8_t displacement_x, int8_t displacement_y)
 {
-    layer_manager->MoveRelative(mouse_layer_id, {displacement_x, displacement_y});
-    StartLAPICTimer();
+    auto newpos = mouse_position + Vector2D<int>{displacement_x, displacement_y};
+    newpos = ElementMin(newpos, screen_size + Vector2D<int>{-1, -1});
+    mouse_position = ElementMax(newpos, {0, 0});
+
+    layer_manager->Move(mouse_layer_id, mouse_position);
     layer_manager->Draw();
-    auto elapsed = LAPICTimerElapsed();
-    StopLAPICTimer();
-    printk("MouseObserver: elapsed = %u\n", elapsed);
 }
 
 void SwitchEhci2Xhci(const pci::Device &xhc_dev)
@@ -138,8 +133,6 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
     printk("Welcome to MikanOS!\n");
 
     SetLogLevel(kWarn);
-
-    InitializeLAPICTimer();
 
     SetupSegments();
 
@@ -268,10 +261,10 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
         }
     }
 
-    const int kFrameWidth = frame_buffer_config.horizontal_resolution;
-    const int kFrameHeight = frame_buffer_config.vertical_resolution;
+    screen_size.x = frame_buffer_config.horizontal_resolution;
+    screen_size.y = frame_buffer_config.vertical_resolution;
 
-    auto bgwindow = std::make_shared<Window>(kFrameWidth, kFrameHeight, frame_buffer_config.pixel_format);
+    auto bgwindow = std::make_shared<Window>(screen_size.x, screen_size.y, frame_buffer_config.pixel_format);
     auto bgwriter = bgwindow->Writer();
 
     DrawDesktop(*bgwriter);
@@ -291,7 +284,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
     layer_manager->SetWriter(&screen);
 
     auto bglayer_id = layer_manager->NewLayer().SetWindow(bgwindow).Move({0, 0}).ID();
-    mouse_layer_id = layer_manager->NewLayer().SetWindow(mouse_window).Move({200, 200}).ID();
+    mouse_layer_id = layer_manager->NewLayer().SetWindow(mouse_window).Move(mouse_position).ID();
 
     layer_manager->UpDown(bglayer_id, 0);
     layer_manager->UpDown(mouse_layer_id, 1);
