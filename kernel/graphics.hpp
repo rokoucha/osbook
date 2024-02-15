@@ -31,14 +31,34 @@ struct Vector2D
 
         return *this;
     }
-};
 
-template <typename T, typename U>
-auto operator+(const Vector2D<T> &lhs, const Vector2D<U> &rhs)
-    -> Vector2D<decltype(lhs.x + rhs.x)>
-{
-    return {lhs.x + rhs.x, lhs.y + rhs.y};
-}
+    template <typename U>
+    Vector2D<T> operator+(const Vector2D<U> &rhs) const
+    {
+        auto tmp = *this;
+        tmp += rhs;
+
+        return tmp;
+    }
+
+    template <typename U>
+    Vector2D<T> &operator-=(const Vector2D<U> &rhs)
+    {
+        x -= rhs.x;
+        y -= rhs.y;
+
+        return *this;
+    }
+
+    template <typename U>
+    Vector2D<T> operator-(const Vector2D<U> &rhs) const
+    {
+        auto tmp = *this;
+        tmp -= rhs;
+
+        return tmp;
+    }
+};
 
 template <typename T>
 Vector2D<T> ElementMax(const Vector2D<T> &lhs, const Vector2D<T> &rhs)
@@ -57,6 +77,22 @@ struct Rectangle
 {
     Vector2D<T> pos, size;
 };
+
+template <typename T, typename U>
+Rectangle<T> operator&(const Rectangle<T> &l, const Rectangle<U> &r)
+{
+    const auto l_end = l.pos + l.size;
+    const auto r_end = r.pos + r.size;
+    if (l_end.x < r.pos.x || l_end.y < r.pos.y || r_end.x < l.pos.x || r_end.y < l.pos.y)
+    {
+        return {{0, 0}, {0, 0}};
+    }
+
+    auto new_pos = ElementMax(l.pos, r.pos);
+    auto new_size = ElementMin(l_end, r_end) - new_pos;
+
+    return {new_pos, new_size};
+}
 
 class PixelWriter
 {

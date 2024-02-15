@@ -73,7 +73,7 @@ Error FrameBuffer::Initialize(const FrameBufferConfig &config)
     return MAKE_ERROR(Error::kSuccess);
 }
 
-Error FrameBuffer::Copy(Vector2D<int> dest_pos, const FrameBuffer &src)
+Error FrameBuffer::Copy(Vector2D<int> dest_pos, const FrameBuffer &src, const Rectangle<int> &src_area)
 {
     if (config_.pixel_format != src.config_.pixel_format)
     {
@@ -86,18 +86,18 @@ Error FrameBuffer::Copy(Vector2D<int> dest_pos, const FrameBuffer &src)
         return MAKE_ERROR(Error::kUnknownPixelFormat);
     }
 
-    const auto dest_size = FrameBufferSize(config_);
-    const auto src_size = FrameBufferSize(src.config_);
+    const Rectangle<int> src_area_shifted{dest_pos, src_area.size};
+    const Rectangle<int> src_outline{dest_pos - src_area.pos, FrameBufferSize(src.config_)};
+    const Rectangle<int> dst_outline{{0, 0}, FrameBufferSize(config_)};
+    const auto copy_area = dst_outline & src_outline & src_area_shifted;
+    const auto src_start_pos = copy_area.pos - (dest_pos - src_area.pos);
 
-    const Vector2D<int> dest_start = ElementMax(dest_pos, {0, 0});
-    const Vector2D<int> dest_end = ElementMin(dest_pos + src_size, dest_size);
+    uint8_t *dest_buf = FrameAddressAt(copy_area.pos, config_);
+    const uint8_t *src_buf = FrameAddressAt(src_start_pos, src.config_);
 
-    uint8_t *dest_buf = FrameAddressAt(dest_start, config_);
-    const uint8_t *src_buf = FrameAddressAt({0, 0}, src.config_);
-
-    for (int y = dest_start.y; y < dest_end.y; y++)
+    for (int y = 0; y < copy_area.size.y; y++)
     {
-        memcpy(dest_buf, src_buf, bytes_per_pixel * (dest_end.x - dest_start.x));
+        memcpy(dest_buf, src_buf, bytes_per_pixel * copy_area.size.x);
         dest_buf += BytesPerScanLine(config_);
         src_buf += BytesPerScanLine(src.config_);
     }
