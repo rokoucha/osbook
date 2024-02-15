@@ -58,3 +58,5 @@ public:
 
     void Move(Vector2D<int> dest_pos, const Rectangle<int> &src);
 };
+
+void DrawWindow(PixelWriter &writer, const char *title);
