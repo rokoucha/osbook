@@ -30,7 +30,7 @@ public:
         kNoWaiter,
         kNoPCIMSI,
         kUnknownPixelFormat,
-        kLasstOfCode,
+        kLastOfCode,
     };
 
 private:
@@ -38,13 +38,13 @@ private:
     int line_;
     const char *file_;
 
-    static constexpr std::array code_names_ = {
+    static constexpr std::array code_names_{
         "kSuccess",
         "kFull",
         "kEmpty",
         "kNoEnoughMemory",
         "kIndexOutOfRange",
-        "kHostContollerNotHalted",
+        "kHostControllerNotHalted",
         "kInvalidSlotID",
         "kPortNotConnected",
         "kInvalidEndpointNumber",
@@ -58,11 +58,11 @@ private:
         "kTransferFailed",
         "kInvalidPhase",
         "kUnknownXHCISpeedID",
-        "kNoWriter",
+        "kNoWaiter",
         "kNoPCIMSI",
         "kUnknownPixelFormat",
     };
-    static_assert(Error::Code::kLasstOfCode == code_names_.size());
+    static_assert(Error::Code::kLastOfCode == code_names_.size());
 
 public:
     Error(Code code, const char *file, int line)
@@ -85,12 +85,12 @@ public:
         return code_names_[static_cast<int>(this->code_)];
     }
 
-    const char *File()
+    const char *File() const
     {
         return this->file_;
     }
 
-    int Line()
+    int Line() const
     {
         return this->line_;
     }

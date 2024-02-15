@@ -6,7 +6,6 @@
 
 #include "graphics.hpp"
 #include "window.hpp"
-#include "frame_buffer.hpp"
 
 class Layer
 {

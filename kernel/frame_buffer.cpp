@@ -21,7 +21,7 @@ namespace
 
     uint8_t *FrameAddressAt(Vector2D<int> pos, const FrameBufferConfig &config)
     {
-        return config.frame_buffer + BytesPerPixel(config.pixel_format) * (config.pixels_per_scan_line * pos.y * pos.y);
+        return config.frame_buffer + BytesPerPixel(config.pixel_format) * (config.pixels_per_scan_line * pos.y + pos.x);
     }
 
     int BytesPerScanLine(const FrameBufferConfig &config)
@@ -53,7 +53,7 @@ Error FrameBuffer::Initialize(const FrameBufferConfig &config)
     {
         buffer_.resize(bytes_per_pixel * config_.horizontal_resolution * config_.vertical_resolution);
         config_.frame_buffer = buffer_.data();
-        config_.pixels_per_scan_line = config.horizontal_resolution;
+        config_.pixels_per_scan_line = config_.horizontal_resolution;
     }
 
     switch (config_.pixel_format)
@@ -131,8 +131,8 @@ void FrameBuffer::Move(Vector2D<int> dest_pos, const Rectangle<int> &src)
         for (int y = 0; y < src.size.y; y++)
         {
             memcpy(dest_buf, src_buf, bytes_per_pixel * src.size.x);
-            dest_buf += bytes_per_scan_line;
-            src_buf += bytes_per_scan_line;
+            dest_buf -= bytes_per_scan_line;
+            src_buf -= bytes_per_scan_line;
         }
     }
 }

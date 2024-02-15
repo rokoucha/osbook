@@ -16,7 +16,7 @@ void SetCodeSegment(SegmentDescriptor &desc, DescriptorType type, unsigned int d
     desc.bits.base_high = (base >> 24) & 0xffu;
 
     desc.bits.limit_low = limit & 0xffffu;
-    desc.bits.limit_high = (limit >> 16) & 0xffu;
+    desc.bits.limit_high = (limit >> 16) & 0xfu;
 
     desc.bits.type = type;
     desc.bits.system_segment = 1; // 1: code & data segment

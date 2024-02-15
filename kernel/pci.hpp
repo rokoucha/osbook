@@ -7,7 +7,7 @@
 
 namespace pci
 {
-    const uint16_t kConfigAddress = 0xcf8;
+    const uint16_t kConfigAddress = 0x0cf8;
     const uint16_t kConfigData = 0x0cfc;
 
     struct ClassCode
@@ -101,7 +101,7 @@ namespace pci
                 uint32_t cap_id : 8;
                 uint32_t next_ptr : 8;
                 uint32_t msi_enable : 1;
-                uint32_t multi_msgs_capable : 3;
+                uint32_t multi_msg_capable : 3;
                 uint32_t multi_msg_enable : 3;
                 uint32_t addr_64_capable : 1;
                 uint32_t per_vector_mask_capable : 1;

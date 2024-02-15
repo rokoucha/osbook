@@ -149,9 +149,9 @@ namespace
     {
         auto msi_cap = ReadMSICapability(dev, cap_addr);
 
-        if (msi_cap.header.bits.multi_msgs_capable <= num_vector_exponent)
+        if (msi_cap.header.bits.multi_msg_capable <= num_vector_exponent)
         {
-            msi_cap.header.bits.multi_msg_enable = msi_cap.header.bits.multi_msgs_capable;
+            msi_cap.header.bits.multi_msg_enable = msi_cap.header.bits.multi_msg_capable;
         }
         else
         {
@@ -243,7 +243,7 @@ namespace pci
             return ScanBus(0);
         }
 
-        for (uint8_t function = 1; function < 8; function++)
+        for (uint8_t function = 0; function < 8; function++)
         {
             if (ReadVendorId(0, 0, function) == 0xffffu)
             {
@@ -312,13 +312,16 @@ namespace pci
     {
         uint8_t cap_addr = ReadConfReg(dev, 0x34) & 0xffu;
         uint8_t msi_cap_addr = 0, msix_cap_addr = 0;
-
         while (cap_addr != 0)
         {
             auto header = ReadCapabilityHeader(dev, cap_addr);
             if (header.bits.cap_id == kCapabilityMSI)
             {
                 msi_cap_addr = cap_addr;
+            }
+            else if (header.bits.cap_id == kCapabilityMSIX)
+            {
+                msix_cap_addr = cap_addr;
             }
             cap_addr = header.bits.next_ptr;
         }
@@ -331,7 +334,6 @@ namespace pci
         {
             return ConfigureMSIXRegister(dev, msix_cap_addr, msg_addr, msg_data, num_vector_exponent);
         }
-
         return MAKE_ERROR(Error::kNoPCIMSI);
     }
 

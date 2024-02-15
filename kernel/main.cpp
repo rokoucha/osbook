@@ -152,7 +152,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
         iter < memory_map_base + memory_map.map_size;
         iter += memory_map.descriptor_size)
     {
-        auto desc = reinterpret_cast<MemoryDescriptor *>(iter);
+        auto desc = reinterpret_cast<const MemoryDescriptor *>(iter);
         if (available_end < desc->physical_start)
         {
             memory_manager->MarkAllocated(FrameID{available_end / kBytesPerFrame}, (desc->physical_start - available_end) / kBytesPerFrame);
@@ -174,7 +174,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
 
     if (auto err = InitializeHeap(*memory_manager))
     {
-        Log(kError, "failed to allocate pages: %s at %s:%d\n");
+        Log(kError, "failed to allocate pages: %s at %s:%d\n", err.Name(), err.File(), err.Line());
         exit(1);
     }
 
@@ -211,7 +211,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
 
     if (xhc_dev)
     {
-        Log(kInfo, "xHC found: %d.%d.%d\n", xhc_dev->bus, xhc_dev->device, xhc_dev->function);
+        Log(kInfo, "xHC has been found: %d.%d.%d\n", xhc_dev->bus, xhc_dev->device, xhc_dev->function);
     }
 
     SetIDTEntry(idt[InterruptVector::kXHCI], MakeIDTAttr(DescriptorType::kInterruptGate, 0), reinterpret_cast<uint64_t>(IntHandlerXHCI), kernel_cs);
@@ -273,6 +273,7 @@ extern "C" void KernelMainNewStack(const FrameBufferConfig &frame_buffer_config_
     auto mouse_window = std::make_shared<Window>(kMouseCursorWidth, kMouseCursorHeight, frame_buffer_config.pixel_format);
     mouse_window->SetTransparentColor(kMouseTransparentColor);
     DrawMouseCursor(mouse_window->Writer(), {0, 0});
+    mouse_position = {200, 200};
 
     auto main_window = std::make_shared<Window>(160, 68, frame_buffer_config.pixel_format);
     DrawWindow(*main_window->Writer(), "Hello Window");
