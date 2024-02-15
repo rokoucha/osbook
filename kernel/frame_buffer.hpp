@@ -23,4 +23,8 @@ public:
     {
         return *writer_;
     }
+    const FrameBufferConfig &Config() const
+    {
+        return config_;
+    }
 };
